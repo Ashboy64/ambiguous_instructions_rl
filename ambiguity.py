@@ -82,11 +82,12 @@ TODO:
 - Some instructions may not really be ambiguous, remove those as possible outputs.
 - "do something with the yellow door" --> probably open
 - "open the green object" --> probably door because only doors can be opened (I think?)
-- The phrase "do something" is only used if instruction is ambiguous --> could be a signal
-  exploited by the classifier
 
 """
 def make_ambiguous(instr, env):
+    # In case we get to an instruction with multiple ways to make ambiguous
+    rand_num = np.random.uniform()
+
     # We are corrupting a description of an object
     if type(instr) == ObjDesc:
         return make_object_ambiguous(instr, env)
@@ -94,43 +95,39 @@ def make_ambiguous(instr, env):
     elif type(instr) == OpenInstr:
         # With 0.5 probability, don't specify to open.
         # With 0.5 probability, corrupt the instruction that follows
-        if np.random.uniform() < 0.5:
-            return "do something with " + instr.desc.surface(env)
-        else:
-            return "open " + make_ambiguous(instr.desc, env)
+        return "open " + make_ambiguous(instr.desc, env)
     elif type(instr) == GoToInstr:
-        if np.random.uniform() < 0.5:
-            return "do something with " + instr.desc.surface(env)
-        else:
-            return "go to " + make_ambiguous(instr.desc, env)
+        return "go to " + make_ambiguous(instr.desc, env)
     elif type(instr) == PickupInstr:
-        if np.random.uniform() < 0.5:
-            return "do something with " + instr.desc.surface(env)
-        else:
-            return "pick up " + make_ambiguous(instr.desc, env)
+        return "pick up " + make_ambiguous(instr.desc, env)
     elif type(instr) == PutNextInstr:
-        rand_num = np.random.uniform()
-        if rand_num < 1/3:  # Concern: is this sentence structure too unique; does it immediately imply PutNextInstr? Remove if this is the case
-            return 'do something with ' + instr.desc_move.surface(env) + ' and ' + instr.desc_fixed.surface(env)
-        elif rand_num < 2/3:
+        if rand_num < 1/3:
             return 'put ' + make_ambiguous(instr.desc_move, env) + ' next to ' + instr.desc_fixed.surface(env)
-        else:
+        elif rand_num < 2/3:
             return 'put ' + instr.desc_move.surface(env) + ' next to ' + make_ambiguous(instr.desc_fixed, env)
+        else:
+            return 'put ' + make_ambiguous(instr.desc_move, env) + ' next to ' + make_ambiguous(instr.desc_fixed, env)
     elif type(instr) == BeforeInstr:
-        if np.random.uniform() < 0.5:
+        if rand_num < 1/3:
             return make_ambiguous(instr.instr_a, env) + ', then ' + instr.instr_b.surface(env)
-        else:
+        elif rand_num < 2/3:
             return instr.instr_a.surface(env) + ', then ' + make_ambiguous(instr.instr_b, env)
+        else:
+            return make_ambiguous(instr.instr_a, env) + ', then ' + make_ambiguous(instr.instr_b, env)
     elif type(instr) == AfterInstr:
-        if np.random.uniform() < 0.5:
+        if rand_num < 1/3:
             return make_ambiguous(instr.instr_a, env) + ' after you ' + instr.instr_b.surface(env)
-        else:
+        elif rand_num < 2/3:
             return instr.instr_a.surface(env) + ' after you ' + make_ambiguous(instr.instr_b, env)
-    elif type(instr) == AndInstr:
-        if np.random.uniform() < 0.5:
-            return make_ambiguous(instr.instr_a, env) + ' and ' + instr.instr_b.surface(env)
         else:
+            return make_ambiguous(instr.instr_a, env) + ' after you ' + make_ambiguous(instr.instr_b, env)
+    elif type(instr) == AndInstr:
+        if rand_num < 1/3:
+            return make_ambiguous(instr.instr_a, env) + ' and ' + instr.instr_b.surface(env)
+        elif rand_num < 2/3:
             return instr.instr_a.surface(env) + ' and ' + make_ambiguous(instr.instr_b, env)
+        else:
+            return make_ambiguous(instr.instr_a, env) + ' and ' + make_ambiguous(instr.instr_b, env)
 
 
 """
