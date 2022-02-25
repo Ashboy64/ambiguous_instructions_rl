@@ -1,0 +1,9 @@
+.remote-sync.json
+scratch.py
+babyai/
+gym-minigrid/
+test_data/
+logs/
+models/
+__pycache__/
+demos/

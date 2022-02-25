@@ -1,5 +1,5 @@
 import gym
-import numpy as np 
+import numpy as np
 
 import babyai
 from babyai.levels.verifier import *
@@ -7,7 +7,7 @@ from babyai.levels.levelgen import *
 
 
 """
-Make the description of an object ambiguous given the object as an ObjDesc 
+Make the description of an object ambiguous given the object as an ObjDesc
 and the environment. Used as a helper function for make_ambiguous().
 """
 def make_object_ambiguous(obj, env):
@@ -23,7 +23,7 @@ def make_object_ambiguous(obj, env):
         options_to_drop.append('color')
     if obj.loc:
         options_to_drop.append('loc')
-    
+
     prob_each = 1 / len(options_to_drop)
     dropped = False
 
@@ -67,8 +67,8 @@ def make_object_ambiguous(obj, env):
 
 """
 Main function to get an ambiguous version of an instruction. Takens
-the instruction (subclass of Instr) and the environment, returns a 
-string representing the ambiguous instruction. 
+the instruction (subclass of Instr) and the environment, returns a
+string representing the ambiguous instruction.
 
 Example usage:
 
@@ -77,7 +77,7 @@ obs = env.reset()
 ambiguous_instr = make_ambiguous(env.instrs, env)
 
 TODO:
-- Exactly one object or sub-instruction (on the same 'level') is made ambiguous. Need 
+- Exactly one object or sub-instruction (on the same 'level') is made ambiguous. Need
   to randomize how many are made ambiguous so that task is harder
 - Some instructions may not really be ambiguous, remove those as possible outputs.
 - "do something with the yellow door" --> probably open
@@ -131,7 +131,7 @@ def make_ambiguous(instr, env):
 
 
 """
-Testing function to print ambiguous instructions for all 
+Testing function to print ambiguous instructions for all
 the environments available on the platform.
 """
 def print_ambiguous_instructions():
@@ -145,11 +145,10 @@ def print_ambiguous_instructions():
             obs = env.reset()
 
             print(f"Original instruction: {obs['mission']}")
-
             for i in range(3):
                 ambiguous_instr = make_ambiguous(env.instrs, env)
                 print(f"Ambiguous instruction {i}: {ambiguous_instr}")
-            
+
             print()
         print()
 
