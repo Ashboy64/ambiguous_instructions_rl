@@ -4,6 +4,7 @@ import pickle
 import gzip
 from collections import namedtuple
 import GPUtil
+import yaml
 
 
 def pickle_object(filepath, obj):
@@ -36,3 +37,10 @@ def get_gpu_utilization_info():
 
         info[gpu_id] = {"utilization":gpu_utilization, "mem_usage":gpu_memory_usage}
     return info
+
+
+def save_args(args, trial_dir):
+    pickle_object(os.path.join(trial_dir, "args.pkl"), args)
+
+    with open(os.path.join(trial_dir, "args.yml"), "w") as f:
+        yaml.dump(args.__dict__, f)

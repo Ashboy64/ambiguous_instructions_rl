@@ -24,6 +24,7 @@ from babyai.evaluate import batch_evaluate
 from babyai.utils.agent import ModelAgent
 from gym_minigrid.wrappers import RGBImgPartialObsWrapper
 
+from utils import save_args
 from wrappers import AmbiguousInstructionsWrapper
 
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -35,6 +36,11 @@ python3 -u train_rl_ambiguous.py \
 --env BabyAI-GoToObj-v0 \
 --algo ppo \
 --prob-ambiguous 0.5
+
+python3 -u train_rl_ambiguous.py \
+--env BabyAI-GoToObj-v0 \
+--algo ppo \
+--prob-ambiguous 0
 
 python3 -u train_rl.py \
 --env BabyAI-GoToObj-v0 \
@@ -92,17 +98,20 @@ model_name_parts = {
     'arch': args.arch,
     'instr': instr,
     'mem': mem,
+    "prob_ambiguous":args.prob_ambiguous,
     'seed': args.seed,
     'info': '',
     'coef': '',
     'suffix': suffix}
-default_model_name = "{env}_{algo}_{arch}_{instr}_{mem}_seed{seed}{info}{coef}_{suffix}".format(**model_name_parts)
+default_model_name = "{env}_{algo}_{arch}_{instr}_{mem}_{prob_ambiguous}_seed{seed}{info}{coef}_{suffix}".format(**model_name_parts)
 if args.pretrained_model:
     default_model_name = args.pretrained_model + '_pretrained_' + default_model_name
 args.model = args.model.format(**model_name_parts) if args.model else default_model_name
 
 utils.configure_logging(args.model)
 logger = logging.getLogger(__name__)
+
+save_args(args, utils.get_log_dir(args.model))
 
 # Define obss preprocessor
 if 'emb' in args.arch:
