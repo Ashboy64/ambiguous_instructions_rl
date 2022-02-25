@@ -26,8 +26,8 @@ from gym_minigrid.wrappers import RGBImgPartialObsWrapper
 
 from wrappers import AmbiguousInstructionsWrapper
 
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 """
@@ -35,6 +35,10 @@ python3 -u train_rl_ambiguous.py \
 --env BabyAI-GoToObj-v0 \
 --algo ppo \
 --prob-ambiguous 0.5
+
+python3 -u train_rl.py \
+--env BabyAI-GoToObj-v0 \
+--algo ppo
 """
 
 
