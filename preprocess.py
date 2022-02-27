@@ -2,6 +2,8 @@ import numpy as np
 import babyai.utils as utils
 import blosc
 import json
+import os
+import random
 
 
 def get_image_command(filepath):
@@ -34,12 +36,36 @@ def make_data_file(samples, labels, path):
             outfile.write("\n")
 
 
-def main():
-    # samples, labels = get_image_command("data/BabyAI-GoToLocal-v0.pkl")
-    # make_data_file(samples, labels, "data/data.jsonl")
+def split_dataset(data_dir):
+    paths = os.listdir(data_dir)
+    all_samples = []
+    all_labels = []
+    for path in paths:
+        samples, labels = get_image_command(os.path.join(data_dir, path))
+        all_samples += samples
+        all_labels += labels
+    length = len(all_samples)
+    indices = list(range(length))
+    random.shuffle(indices)
+    train_samples = []
+    train_labels = []
+    for idx in indices[:int(0.7*length)]:
+        train_samples.append(all_samples[idx])
+        train_labels.append(all_labels[idx])
+    make_data_file(train_samples, train_labels, "data/train.jsonl")
+    valid_samples = []
+    valid_labels = []
+    for idx in indices[int(0.7*length):int(0.9*length)]:
+        valid_samples.append(all_samples[idx])
+        valid_labels.append(all_labels[idx])
+    make_data_file(valid_samples, valid_labels, "data/valid.jsonl")
+    test_samples = []
+    test_labels = []
+    for idx in indices[int(0.9*length):int(length)]:
+        test_samples.append(all_samples[idx])
+        test_labels.append(all_labels[idx])
+    make_data_file(test_samples, test_labels, "data/test.jsonl")
 
-    samples, labels = get_image_command("data/BabyAI-GoToObj-v0.pkl")
-    make_data_file(samples, labels, "data/data_val.jsonl")
 
 if __name__ == '__main__':
-    main()
+    split_dataset("./data")
