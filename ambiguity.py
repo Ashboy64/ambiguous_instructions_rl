@@ -137,7 +137,8 @@ the environments available on the platform.
 def print_ambiguous_instructions():
     # Environments below cause internal errors in BabyAI, so skipped
     to_skip = set(["PutNextS5N2Carrying", "PutNextS6N3Carrying", "PutNextS7N4Carrying"])
-    for name in level_dict:
+    # for name in ["GoToObj", "GoToRedBallGrey", "GoToRedBall", "GoToLocal", "PutNextLocal"]: # level_dict:
+    for name in ["OpenDoorLoc", "GoToLocal", "PickupLoc", "PutNextLocalS6N4"]: # level_dict:
         if name in to_skip: continue
         print(name)
         for i in range(3):

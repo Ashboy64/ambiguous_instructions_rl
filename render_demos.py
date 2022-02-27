@@ -7,14 +7,16 @@ Visualize the performance of a model on a given environment.
 import argparse
 import gym
 import time
+import cv2
 
 import babyai.utils as utils
 
 """
 python3 -u render_demos.py \
---env BabyAI-BossLevel-v0 \
---demos /iris/u/khatch/CS224N/questioning_agent/demos/BabyAI-BossLevel-v0_agent \
---demos-origin agent
+--env BabyAI-GoToLocal-v0 \
+--demos /iris/u/khatch/CS224N/ambiguous_instructions_rl/test_data/BabyAI-GoToLocal-v0 \
+--demos-origin agent \
+--n-episodes 1
 """
 
 # Parse arguments
@@ -36,7 +38,8 @@ parser.add_argument("--pause", type=float, default=0.1,
                     help="the pause between two consequent actions of an agent")
 parser.add_argument("--manual-mode", action="store_true", default=False,
                     help="Allows you to take control of the agent at any point of time")
-
+parser.add_argument("--n-episodes", type=int, default=1,
+                    help="How many episodes from the demo file to render")
 args = parser.parse_args()
 
 action_map = {
@@ -70,52 +73,25 @@ print("Mission: {}".format(obs["mission"]))
 # Define agent
 agent = utils.load_agent(env, args.model, args.demos, args.demos_origin, args.argmax, args.env)
 
-# Run the agent
-
-done = True
-
-action = None
-
-def keyDownCb(event):
-    global obs
-
-    keyName = event.key
-    print(keyName)
-
-    # Avoiding processing of observation by agent for wrong key clicks
-    if keyName not in action_map and keyName != "enter":
-        return
-
-    agent_action = agent.act(obs)['action']
-
-    # Map the key to an action
-    if keyName in action_map:
-        action = env.actions[action_map[keyName]]
-
-    # Enter executes the agent's action
-    elif keyName == "enter":
-        action = agent_action
-
-    obs, reward, done, _ = env.step(action)
-    agent.analyze_feedback(reward, done)
-    if done:
-        print("Reward:", reward)
-        obs = env.reset()
-        print("Mission: {}".format(obs["mission"]))
 
 
-if args.manual_mode:
-    env.render('human')
-    env.window.reg_key_handler(keyDownCb)
+def save_images(images, env_name, ep_number):
+    episode_images_dir = os.path.join("rendered_demos", env_name, ep_number)
 
-step = 0
-episode_num = 0
-while True:
-    # time.sleep(args.pause)
-    # env.render("human")
-    img = env.render("rgb_array")
-    import pdb; pdb.set_trace()
-    if not args.manual_mode:
+    for i, image in enumerate(images):
+        image = np.flip(image, axis=-1)
+        image_file = os.path.join(episode_images_dir, f"frame{i}.png")
+        cv2.imwrite(image_file, image)
+
+
+def render_episodes():
+    images = []
+    step = 0
+    episode_num = 0
+    while True:
+        img = env.render("rgb_array")
+        images.append(img)
+
         result = agent.act(obs)
         obs, reward, done, _ = env.step(result['action'])
         agent.analyze_feedback(reward, done)
@@ -128,13 +104,16 @@ while True:
             print("step: {}, mission: {}".format(step, obs['mission']))
         if done:
             print("Reward:", reward)
+
+            save_images(images, env_name, ep_number)
+            images = []
+
             episode_num += 1
             env.seed(args.seed + episode_num)
             obs = env.reset()
             agent.on_reset()
             step = 0
+            if episode_num >= args.n_episodes:
+                break
         else:
             step += 1
-
-    if env.window.closed:
-        break

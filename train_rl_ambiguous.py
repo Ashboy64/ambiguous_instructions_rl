@@ -20,12 +20,13 @@ import babyai.utils as utils
 import babyai.rl
 from babyai.arguments import ArgumentParser
 from babyai.model import ACModel
-from babyai.evaluate import batch_evaluate
+# from babyai.evaluate import batch_evaluate
 from babyai.utils.agent import ModelAgent
 from gym_minigrid.wrappers import RGBImgPartialObsWrapper
 
 from utils import save_args
-from wrappers import AmbiguousInstructionsWrapper
+from wrappers import AmbiguousInstructionsWrapper, NonsenseInstructionsWrapper
+from custom_evaluate import batch_evaluate
 
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
@@ -33,18 +34,60 @@ from wrappers import AmbiguousInstructionsWrapper
 
 """
 python3 -u train_rl_ambiguous.py \
---env BabyAI-GoToObj-v0 \
+--env BabyAI-PutNextLocal-v0 \
+--frames 3000000 \
+--tb \
+--procs 64 \
 --algo ppo \
---prob-ambiguous 0.5
+--ambiguous \
+--prob-ambiguous 1
+
 
 python3 -u train_rl_ambiguous.py \
 --env BabyAI-GoToObj-v0 \
+--frames 3000000 \
+--tb \
+--procs 64 \
 --algo ppo \
---prob-ambiguous 0
+--nonsense
 
-python3 -u train_rl.py \
---env BabyAI-GoToObj-v0 \
+GoToObj
+GoToRedBallGrey
+GoToRedBall
+GoToLocal
+PutNextLocal
+
+
+
+
+OpenDoorLoc
+GoToLocal
+PickupLoc
+PutNextLocalS6N4
+
+python3 -u train_rl_ambiguous.py \
+--env BabyAI-PutNextLocalS6N4-v0 \
+--frames 6000000 \
+--tb \
+--procs 64 \
 --algo ppo
+
+python3 -u train_rl_ambiguous.py \
+--env BabyAI-PutNextLocalS6N4-v0 \
+--frames 6000000 \
+--tb \
+--procs 64 \
+--algo ppo \
+--ambiguous \
+--prob-ambiguous 1
+
+python3 -u train_rl_ambiguous.py \
+--env BabyAI-PutNextLocalS6N4-v0 \
+--frames 6000000 \
+--tb \
+--procs 64 \
+--algo ppo \
+--nonsense
 """
 
 
@@ -69,9 +112,15 @@ parser.add_argument("--ppo-epochs", type=int, default=4,
 parser.add_argument("--save-interval", type=int, default=50,
                     help="number of updates between two saves (default: 50, 0 means no saving)")
 
+parser.add_argument("--nonsense", "-n", action="store_true", default=False,
+                    help="Add NonsenseInstructionsWrapper")
+parser.add_argument("--ambiguous", "-a", action="store_true", default=False,
+                    help="Add AmbiguousInstructionsWrapper")
 parser.add_argument("--prob-ambiguous", type=float, default=0.5,
                     help="Probability that the env will generate ambiguous instructions each episode")
 args = parser.parse_args()
+
+assert not (args.nonsense and args.ambiguous), f"args: {args}"
 
 utils.seed(args.seed)
 
@@ -81,7 +130,10 @@ use_pixel = 'pixel' in args.arch
 for i in range(args.procs):
     env = gym.make(args.env)
 
-    env = AmbiguousInstructionsWrapper(env, prob_ambiguous=args.prob_ambiguous)
+    if args.ambiguous:
+        env = AmbiguousInstructionsWrapper(env, prob_ambiguous=args.prob_ambiguous)
+    elif args.nonsense:
+        env = NonsenseInstructionsWrapper(env)
 
     if use_pixel:
         env = RGBImgPartialObsWrapper(env)
@@ -92,18 +144,27 @@ for i in range(args.procs):
 suffix = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
 instr = args.instr_arch if args.instr_arch else "noinstr"
 mem = "mem" if not args.no_mem else "nomem"
+
+if args.nonsense:
+    exp_type = "nonsense"
+elif args.ambiguous:
+    exp_type = f"ambiguous-{args.prob_ambiguous}"
+else:
+    exp_type = "plain"
+
+
 model_name_parts = {
     'env': args.env,
+    "exp_type": exp_type,
     'algo': args.algo,
     'arch': args.arch,
     'instr': instr,
     'mem': mem,
-    "prob_ambiguous":args.prob_ambiguous,
     'seed': args.seed,
     'info': '',
     'coef': '',
     'suffix': suffix}
-default_model_name = "{env}_{algo}_{arch}_{instr}_{mem}_{prob_ambiguous}_seed{seed}{info}{coef}_{suffix}".format(**model_name_parts)
+default_model_name = "{env}_{exp_type}_{algo}_{arch}_{instr}_{mem}_seed{seed}{info}{coef}_{suffix}".format(**model_name_parts)
 if args.pretrained_model:
     default_model_name = args.pretrained_model + '_pretrained_' + default_model_name
 args.model = args.model.format(**model_name_parts) if args.model else default_model_name
@@ -266,7 +327,7 @@ while status['num_frames'] < args.frames:
         agent = ModelAgent(args.model, obss_preprocessor, argmax=True)
         agent.model = acmodel
         agent.model.eval()
-        logs = batch_evaluate(agent, test_env_name, args.val_seed, args.val_episodes, pixel=use_pixel)
+        logs = batch_evaluate(agent, test_env_name, args.val_seed, args.val_episodes, pixel=use_pixel, nonsense=args.nonsense, ambiguous=args.ambiguous, prob_ambiguous=args.prob_ambiguous)
         agent.model.train()
         mean_return = np.mean(logs["return_per_episode"])
         success_rate = np.mean([1 if r > 0 else 0 for r in logs['return_per_episode']])
