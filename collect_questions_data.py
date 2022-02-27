@@ -72,7 +72,7 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
                 else:
                     new_mission = mission
 
-                all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, mission, is_ambiguous))
+                all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
                 obs = new_obs
 
                 t+=1

@@ -10,7 +10,7 @@ from torchinfo import summary
 class TextDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir, tokenizer):
         with open(data_dir, "r") as f:
-            self.samples = [json.loads(line) for line in f] 
+            self.samples = [json.loads(line) for line in f]
         self.data_dir = data_dir
         self.tokenizer = tokenizer
 
@@ -34,7 +34,7 @@ def train(model, num_epochs, data_loader):
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.0001)
 
     model.train()
-    
+
     for epoch in range(num_epochs):
         epoch_loss = 0.
         metric = torchmetrics.Accuracy()

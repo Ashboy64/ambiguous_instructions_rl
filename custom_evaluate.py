@@ -18,7 +18,7 @@ def batch_evaluate(agent, env_name, seed, episodes, return_obss_actions=False, p
         env = gym.make(env_name)
 
         if ambiguous:
-            env = AmbiguousInstructionsWrapper(env, prob_ambiguous=args.prob_ambiguous)
+            env = AmbiguousInstructionsWrapper(env, prob_ambiguous=prob_ambiguous)
         elif nonsense:
             env = NonsenseInstructionsWrapper(env)
 
