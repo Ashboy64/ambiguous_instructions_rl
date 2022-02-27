@@ -4,7 +4,7 @@ import random
 import json
 import torchmetrics
 import torch.nn.functional as F
-from torchinfo import summary
+import matplotlib.pyplot as plt
 
 
 class TextDataset(torch.utils.data.Dataset):
@@ -30,7 +30,7 @@ class TextDataset(torch.utils.data.Dataset):
         return text, label
 
 
-def train(model, num_epochs, data_loader):
+def train(model, num_epochs, data_loader, valid_dataloader):
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.0001)
 
     model.train()
@@ -40,6 +40,8 @@ def train(model, num_epochs, data_loader):
         metric = torchmetrics.Accuracy()
         i = 1
         for batch in data_loader:
+            # if i == 10:
+            #     break
             text, labels = batch
             # labels = labels.unsqueeze(1)
             model.zero_grad()
@@ -58,12 +60,19 @@ def train(model, num_epochs, data_loader):
             acc = metric(logits, labels)
             print("Batch", i, ", Accuracy:", acc.item(), "Loss:", loss.item())
             if i == 1:
-                print("logits", logits.data)
+                # print("logits", logits.data)
                 print("pred", torch.argmax(logits, dim=-1))
                 print("target", labels.data)
             i += 1
         acc = metric.compute()
         print("******************\nEpoch", epoch, ", Accuracy:", acc.item(), "Loss:", epoch_loss / i, "\n*********************")
+        with open("log.txt", "a") as f:
+            f.write(str(acc.item()) + "," + str(epoch_loss) + "\n")
+        validate(model, valid_dataloader)
+        if epoch % 10 == 0:
+            torch.save(model.state_dict(), "finetuned_models/gpt2.pth")
+            plot("log.txt", "log_val.txt", "accuracy")
+            plot("log.txt", "log_val.txt", "loss")
 
     return model
 
@@ -73,7 +82,10 @@ def validate(model, data_loader):
     metric = torchmetrics.Accuracy()
     with torch.no_grad():
         i = 1
+        epoch_loss = 0.
         for batch in data_loader:
+            # if i == 10:
+            #     break
             text, labels = batch
             # labels = labels.unsqueeze(1)
             model.zero_grad()
@@ -86,6 +98,29 @@ def validate(model, data_loader):
             i += 1
         acc = metric.compute()
         print("******************\nOverall Validation Accuracy:", acc.item(), "Loss:", epoch_loss / i, "\n*********************")
+        with open("log_val.txt", "a") as f:
+            f.write(str(acc.item()) + "," + str(epoch_loss) + "\n")
+
+
+def plot(filepath_train, filepath_val, var_name):
+    plt.figure()
+    for filepath in [filepath_train, filepath_val]:
+        with open(filepath, "r") as f:
+            data = f.readlines()
+        accuracy = []
+        loss = []
+        for d in data:
+            a, l = d.split(",")
+            a = float(a)
+            l = float(l)
+            accuracy.append(a)
+            loss.append(l)
+        if var_name == "accuracy":
+            plt.plot(range(len(accuracy)), accuracy)
+        if var_name == "loss":
+            plt.plot(range(len(loss)), loss)
+    plt.savefig(var_name + ".png")
+    plt.close()
 
 
 
@@ -100,14 +135,15 @@ def main():
     model = GPT2ForSequenceClassification.from_pretrained(pretrained_model_name_or_path='gpt2', config=model_config)
     model.resize_token_embeddings(len(tokenizer))
     model.config.pad_token_id = model.config.eos_token_id
-    train_dataset = TextDataset('data/data.jsonl', tokenizer)
+    train_dataset = TextDataset('data/train.jsonl', tokenizer)
     train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    valid_dataset =  TextDataset('data/data_val.jsonl', tokenizer)
+    valid_dataset =  TextDataset('data/valid.jsonl', tokenizer)
     valid_dataloader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size, shuffle=False)
     # print(model)
-    model = train(model, num_epochs, train_dataloader)
-    validate(model, valid_dataloader)
-    torch.save(model.state_dict(), "finetuned_models/gpt2.pth")
+    model = train(model, num_epochs, train_dataloader, valid_dataloader)
+
+    plot("log.txt", "log_val.txt", "accuracy")
+    plot("log.txt", "log_val.txt", "loss")
 
 
 if __name__ == "__main__":
