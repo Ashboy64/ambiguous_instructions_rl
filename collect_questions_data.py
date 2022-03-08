@@ -12,12 +12,14 @@ from tqdm import tqdm, trange
 import copy
 
 import babyai.utils as utils
+from babyai.levels.verifier import ObjDesc
 
 from ambiguity import make_ambiguous
+from gym_minigrid.minigrid import COLOR_NAMES
 
 """
 python3 -u collect_questions_data.py \
---savedir ./test_data \
+--savedir ./data \
 --max-steps 300 \
 --eps-per-level 100 \
 --samples-per-level 200
@@ -36,6 +38,9 @@ LEVELS = ["BabyAI-GoToObj-v0",
           "BabyAI-GoToObjMaze-v0"]
 
 def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
+    OBJ_TYPES = ['box', 'ball', 'key', 'door']
+    LOC_NAMES = ['left', 'right', 'front', 'behind']
+
     assert max_steps > 0
     assert eps_per_level > 0
     assert samples_per_level > 0
@@ -54,21 +59,39 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
 
             done = False
             t = 0
+            num_ambiguous = 0
             while not done:
                 action = agent.act(obs)['action']
                 if isinstance(action, torch.Tensor):
                     action = action.item()
                 new_obs, reward, done, _ = env.step(action)
                 agent.analyze_feedback(reward, done)
+                mission_wordlist = obs["mission"].split(" ")
+                color = None
+                loc = None
+                type = None
+                for word in mission_wordlist:
+                    if word in COLOR_NAMES:
+                        color = word
+                    elif word in LOC_NAMES:
+                        loc = word
+                    elif word in OBJ_TYPES:
+                        type = word
+                desc = ObjDesc(type, color=color, loc=loc)
 
 
                 # This makes the instruction ambiguous that is being saved in the dataset,
                 # but the original, unaltered instruction is still used by the agent
-                is_ambiguous = np.random.uniform() > 0.5
+                is_ambiguous = np.random.uniform() > 0.3
                 if is_ambiguous:
                     new_mission = make_ambiguous(env.instrs, env)
                     # print("\nmission:", mission)
                     # print("new_mission:", new_mission)
+                    if len(desc.find_matching_objs(env)[0]) > 1:
+                        is_ambiguous = True
+                    else:
+                        is_ambiguous = False
+                        num_ambiguous += 1
                 else:
                     new_mission = mission
 
@@ -78,6 +101,7 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
                 t+=1
                 if t >= max_steps:
                     done = True
+            print("Generated", num_ambiguous, "ambiguous instructions.")
 
         sample_idxs = np.random.choice(list(range(len(all_data))), size=samples_per_level, replace=False)
         samples = [all_data[idx] for idx in sample_idxs]
