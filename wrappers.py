@@ -16,6 +16,8 @@ import babyai.utils as utils
 from ambiguity import make_ambiguous
 
 
+NONSENSE_STRING = "ball ball ball ball ball ball ball ball ball" 
+
 class InstructionsWrapperBase:
     def __init__(self, env):
         self._env = env
@@ -48,7 +50,7 @@ class InstructionsWrapperBase:
 class NonsenseInstructionsWrapper(InstructionsWrapperBase):
     def __init__(self, env):
         super().__init__(env)
-        self._mission = "ball ball ball ball ball ball ball ball ball"
+        self._mission = NONSENSE_STRING
 
 
 class AmbiguousInstructionsWrapper(InstructionsWrapperBase):

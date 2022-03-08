@@ -9,6 +9,7 @@ from wrappers import AmbiguousInstructionsWrapper, NonsenseInstructionsWrapper
 
 # Returns the performance of the agent on the environment for a particular number of episodes.
 def batch_evaluate(agent, env_name, seed, episodes, return_obss_actions=False, pixel=False, nonsense=False, ambiguous=False, prob_ambiguous=0.5):
+    print("Custom batch evaluate!!!")
     assert not (nonsense and ambiguous), f"Nonsense and Ambiguous are both true"
 
     num_envs = min(256, episodes)
@@ -41,6 +42,10 @@ def batch_evaluate(agent, env_name, seed, episodes, return_obss_actions=False, p
         env.seed(seeds)
 
         many_obs = env.reset()
+
+        if i == 0:
+            print("True mission:", env.envs[0].true_mission)
+            print("Mission:", many_obs[i]["mission"])
 
         cur_num_frames = 0
         num_frames = np.zeros((num_envs,), dtype='int64')
