@@ -20,7 +20,7 @@ from gym_minigrid.minigrid import COLOR_NAMES
 """
 python3 -u collect_questions_data.py \
 --savedir ./data \
---max-steps 300 \
+--max-steps 3000 \
 --eps-per-level 100 \
 --samples-per-level 200
 
@@ -29,16 +29,17 @@ Specify which levels to collect data for by editing the LEVELS constant
 """
 
 
-LEVELS = ["BabyAI-GoToObj-v0",
-          "BabyAI-GoToRedBallGrey-v0",
-          "BabyAI-GoToRedBall-v0",
-          "BabyAI-GoToLocal-v0",
-          # "BabyAI-PutNextLocal-v0",
-          # "BabyAI-PickupLoc-v0",
-          "BabyAI-GoToObjMaze-v0"]
+LEVELS = [# "BabyAI-GoToObj-v0",
+          # "BabyAI-GoToRedBallGrey-v0",
+          # "BabyAI-GoToRedBall-v0",
+          # "BabyAI-GoToLocal-v0",
+          # "BabyAI-PutNextLocalS6N4-v0",
+          "BabyAI-PickupLoc-v0",
+          # "BabyAI-GoToObjMaze-v0"
+          ]
 
 def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
-    OBJ_TYPES = ['box', 'ball', 'key', 'door']
+    OBJ_TYPES = ['box', 'ball', 'key', 'door', 'object']
     LOC_NAMES = ['left', 'right', 'front', 'behind']
 
     assert max_steps > 0
@@ -50,6 +51,7 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
         agent = utils.load_agent(env, "BOT", argmax=False)
         demos_path = os.path.join(savedir, level + ".pkl")
         all_data = []
+        total_ambi = 0
 
         for ep_idx in trange(eps_per_level, desc=f"Generating data for {level}..."):
             obs = env.reset()
@@ -57,10 +59,10 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
 
             mission = obs["mission"]
 
-            done = False
             t = 0
             num_ambiguous = 0
-            while not done:
+            all = 0
+            while True:
                 action = agent.act(obs)['action']
                 if isinstance(action, torch.Tensor):
                     action = action.item()
@@ -79,29 +81,33 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
                         type = word
                 desc = ObjDesc(type, color=color, loc=loc)
 
-
                 # This makes the instruction ambiguous that is being saved in the dataset,
                 # but the original, unaltered instruction is still used by the agent
-                is_ambiguous = np.random.uniform() > 0.3
+                is_ambiguous = np.random.uniform() > 0.5
                 if is_ambiguous:
                     new_mission = make_ambiguous(env.instrs, env)
+                    print(mission, new_mission)
                     # print("\nmission:", mission)
                     # print("new_mission:", new_mission)
                     if len(desc.find_matching_objs(env)[0]) > 1:
                         is_ambiguous = True
                     else:
                         is_ambiguous = False
-                        num_ambiguous += 1
                 else:
                     new_mission = mission
-
-                all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
+                if is_ambiguous:
+                    all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
+                    num_ambiguous += 1
+                    all += 1
+                elif all <= 2 * is_ambiguous or all <= 100:
+                    all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
+                    all += 1
                 obs = new_obs
 
                 t+=1
                 if t >= max_steps:
-                    done = True
-            print("Generated", num_ambiguous, "ambiguous instructions.")
+                    print("Generated", num_ambiguous, "ambiguous instructions in a total of", all, "instructions.")
+                    break
 
         sample_idxs = np.random.choice(list(range(len(all_data))), size=samples_per_level, replace=False)
         samples = [all_data[idx] for idx in sample_idxs]
