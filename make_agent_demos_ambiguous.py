@@ -66,32 +66,11 @@ logger = logging.getLogger(__name__)
 
 """
 python3 -u make_agent_demos_ambiguous.py \
---env BabyAI-OpenDoorLoc-v0 \
+--env BabyAI-UnblockPickup-v0 \
 --model BOT \
 --episodes 10000 \
 --valid-episodes 1000 \
---demos BabyAI-OpenDoorLoc-v0
-
-python3 -u make_agent_demos_ambiguous.py \
---env BabyAI-GoToLocal-v0 \
---model BOT \
---episodes 10000 \
---valid-episodes 1000 \
---demos BabyAI-GoToLocal-v0
-
-python3 -u make_agent_demos_ambiguous.py \
---env BabyAI-PickupLoc-v0 \
---model BOT \
---episodes 10000 \
---valid-episodes 1000 \
---demos BabyAI-PickupLoc-v0
-
-python3 -u make_agent_demos_ambiguous.py \
---env BabyAI-PutNextLocalS6N4-v0 \
---model BOT \
---episodes 10000 \
---valid-episodes 1000 \
---demos BabyAI-PutNextLocalS6N4-v0
+--demos BabyAI-UnblockPickup-v0
 """
 
 def print_demo_lengths(demos):
@@ -111,15 +90,18 @@ def generate_demos(n_episodes, valid, seed, shift=0):
 
     if valid:
         ambiguous_demos_path = demos_path.split(".")[0][:-6] + "_ambiguous_valid.pkl"
+        half_ambiguous_demos_path = demos_path.split(".")[0][:-6] + "_half_ambiguous_valid.pkl"
         nonsense_demos_path = demos_path.split(".")[0][:-6] + "_nonsense_valid.pkl"
     else:
         ambiguous_demos_path = demos_path.split(".")[0] + "_ambiguous.pkl"
+        half_ambiguous_demos_path = demos_path.split(".")[0] + "_half_ambiguous.pkl"
         nonsense_demos_path = demos_path.split(".")[0] + "_nonsense.pkl"
 
 
 
     demos = []
     ambiguous_demos = []
+    half_ambiguous_demos = []
     nonsense_demos = []
 
     checkpoint_time = time.time()
@@ -161,6 +143,8 @@ def generate_demos(n_episodes, valid, seed, shift=0):
 
                 ambiguous_mission = make_ambiguous(env.instrs, env)
                 ambiguous_demos.append((ambiguous_mission, blosc.pack_array(np.array(images)), directions, actions))
+                half_ambiguous_mission = ambiguous_mission if np.random.uniform() > 0.5 else mission
+                half_ambiguous_demos.append((half_ambiguous_mission, blosc.pack_array(np.array(images)), directions, actions))
                 nonsense_demos.append((NONSENSE_STRING, blosc.pack_array(np.array(images)), directions, actions))
 
                 just_crashed = False
@@ -190,6 +174,7 @@ def generate_demos(n_episodes, valid, seed, shift=0):
         if args.save_interval > 0 and len(demos) < n_episodes and len(demos) % args.save_interval == 0:
             logger.info("Saving demos...")
             utils.save_demos(demos, demos_path)
+            utils.save_demos(half_ambiguous_demos, half_ambiguous_demos_path)
             utils.save_demos(ambiguous_demos, ambiguous_demos_path)
             utils.save_demos(nonsense_demos, nonsense_demos_path)
             logger.info("{} demos saved".format(len(demos)))
@@ -205,6 +190,7 @@ def generate_demos(n_episodes, valid, seed, shift=0):
 
 
     utils.save_demos(demos, demos_path)
+    utils.save_demos(half_ambiguous_demos, half_ambiguous_demos_path)
     utils.save_demos(ambiguous_demos, ambiguous_demos_path)
     utils.save_demos(nonsense_demos, nonsense_demos_path)
     logger.info("{} demos saved".format(len(demos)))
