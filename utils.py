@@ -3,7 +3,7 @@ import os
 import pickle
 import gzip
 from collections import namedtuple
-import GPUtil
+# import GPUtil
 import yaml
 
 

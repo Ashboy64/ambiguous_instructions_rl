@@ -88,6 +88,34 @@ python3 -u train_rl_ambiguous.py \
 --procs 64 \
 --algo ppo \
 --nonsense
+
+Training with penalty:
+python3 -u train_rl_ambiguous.py \
+--env BabyAI-GoToLocal-v0 \
+--frames 6000000 \
+--tb \
+--procs 20 \
+--algo ppo \
+--timestep_penalty 0.1
+
+python3 -u train_rl_ambiguous.py \
+--env BabyAI-GoToLocal-v0 \
+--frames 6000000 \
+--tb \
+--procs 20 \
+--algo ppo \
+--ambiguous \
+--prob-ambiguous 1 \
+--timestep_penalty 0.1
+
+python3 -u train_rl_ambiguous.py \
+--env BabyAI-GoToLocal-v0 \
+--frames 6000000 \
+--tb \
+--procs 20 \
+--algo ppo \
+--nonsense \
+--timestep_penalty 0.1
 """
 
 
@@ -111,6 +139,9 @@ parser.add_argument("--ppo-epochs", type=int, default=4,
                     help="number of epochs for PPO (default: 4)")
 parser.add_argument("--save-interval", type=int, default=50,
                     help="number of updates between two saves (default: 50, 0 means no saving)")
+
+parser.add_argument("--timestep_penalty", type=float, default=0, 
+                    help="penalty to apply at each timestep agent has not reached goal")
 
 parser.add_argument("--nonsense", "-n", action="store_true", default=False,
                     help="Add NonsenseInstructionsWrapper")
@@ -163,8 +194,10 @@ model_name_parts = {
     'seed': args.seed,
     'info': '',
     'coef': '',
-    'suffix': suffix}
-default_model_name = "{env}_{exp_type}_{algo}_{arch}_{instr}_{mem}_seed{seed}{info}{coef}_{suffix}".format(**model_name_parts)
+    'suffix': suffix, 
+    'exp_type': exp_type,
+    'penalty': args.timestep_penalty}
+default_model_name = "{exp_type}_{env}_{exp_type}_{algo}_{arch}_{instr}_{mem}_penalty_{penalty}_seed{seed}{info}{coef}_{suffix}".format(**model_name_parts)
 if args.pretrained_model:
     default_model_name = args.pretrained_model + '_pretrained_' + default_model_name
 args.model = args.model.format(**model_name_parts) if args.model else default_model_name
@@ -198,7 +231,16 @@ if torch.cuda.is_available():
 
 # Define actor-critic algo
 
-reshape_reward = lambda _0, _1, reward, _2: args.reward_scale * reward
+# reshape_reward = lambda _0, _1, reward, _2: args.reward_scale * reward
+
+def reshape_reward(_0, _1, reward, _2):
+    # print(reward)
+    if reward == 0:
+        return -1 * args.reward_scale * args.timestep_penalty
+    else:
+        return args.reward_scale * reward
+
+
 if args.algo == "ppo":
     algo = babyai.rl.PPOAlgo(envs, acmodel, args.frames_per_proc, args.discount, args.lr, args.beta1, args.beta2,
                              args.gae_lambda,
