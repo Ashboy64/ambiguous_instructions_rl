@@ -43,7 +43,7 @@ def batch_evaluate(agent, env_name, seed, episodes, return_obss_actions=False, p
 
         many_obs = env.reset()
 
-        if i == 0:
+        if i == 0 and (ambiguous or nonsense):
             print("True mission:", env.envs[0].true_mission)
             print("Mission:", many_obs[i]["mission"])
 

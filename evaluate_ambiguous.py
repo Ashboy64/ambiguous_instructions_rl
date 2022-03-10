@@ -44,23 +44,87 @@ parser.add_argument("--prob-ambiguous", type=float, default=0.5,
 
 
 """
+# R:xsmM 0.534 0.407 0.000 0.950 | S 0.657
 python3 -u evaluate_ambiguous.py \
 --env BabyAI-PutNextLocalS6N4-v0 \
 --episodes 1000 \
 --model BabyAI-PutNextLocalS6N4-v0_IL_bow_endpool_res_gru_seed1_22-03-07-20-35-54_best
 
+# babyai
+# R:xsmM 0.269 0.380 0.000 0.938 | S 0.362
 python3 -u evaluate_ambiguous.py \
 --env BabyAI-PutNextLocalS6N4-v0 \
 --episodes 1000 \
---model BabyAI-PutNextLocalS6N4-v0_IL_bow_endpool_res_gru_seed1_22-03-07-12-40-55_best \
+--model BabyAI-PutNextLocalS6N4-v0_IL_bow_endpool_res_gru_seed1_22-03-08-10-01-33_best \
 --ambiguous \
 --prob-ambiguous 1
 
+# babyai2
+# R:xsmM 0.220 0.357 0.000 0.950 | S 0.301
 python3 -u evaluate_ambiguous.py \
 --env BabyAI-PutNextLocalS6N4-v0 \
 --episodes 1000 \
---model BabyAI-PutNextLocalS6N4-v0_IL_bow_endpool_res_gru_seed1_22-03-07-12-40-55_best \
+--model BabyAI-PutNextLocalS6N4-v0_IL_bow_endpool_res_gru_seed1_22-03-08-10-01-41_best \
 --nonsense
+
+
+# babyai3
+# R:xsmM 0.960 0.149 0.000 0.997 | S 0.982
+python3 -u evaluate_ambiguous.py \
+--env BabyAI-OpenDoorLoc-v0 \
+--episodes 1000 \
+--model BabyAI-OpenDoorLoc-v0_IL_bow_endpool_res_gru_seed1_22-03-08-09-52-57_best
+
+# babyai4
+# R:xsmM 0.907 0.166 0.000 0.997 | S 0.989
+python3 -u evaluate_ambiguous.py \
+--env BabyAI-OpenDoorLoc-v0 \
+--episodes 1000 \
+--model BabyAI-OpenDoorLoc-v0_IL_bow_endpool_res_gru_seed1_22-03-08-09-54-23_best \
+--ambiguous \
+--prob-ambiguous 1
+
+# babyai5
+# R:xsmM 0.930 0.105 0.000 0.997 | S 0.999
+python3 -u evaluate_ambiguous.py \
+--env BabyAI-OpenDoorLoc-v0 \
+--episodes 1000 \
+--model BabyAI-OpenDoorLoc-v0_IL_bow_endpool_res_gru_seed1_22-03-08-09-57-30_best \
+--nonsense
+
+
+# babyai6
+# R:xsmM 0.840 0.220 0.000 0.986 | S 0.955
+python3 -u evaluate_ambiguous.py \
+--env BabyAI-GoToLocal-v0 \
+--episodes 1000 \
+--model BabyAI-GoToLocal-v0_IL_bow_endpool_res_gru_seed1_22-03-08-09-58-26_best
+
+# babyai7
+# R:xsmM 0.729 0.309 0.000 0.986 | S 0.884
+python3 -u evaluate_ambiguous.py \
+--env BabyAI-GoToLocal-v0 \
+--episodes 1000 \
+--model BabyAI-GoToLocal-v0_IL_bow_endpool_res_gru_seed1_22-03-08-10-00-27_best \
+--ambiguous \
+--prob-ambiguous 1
+
+# babyai8
+# R:xsmM 0.605 0.354 0.000 0.986 | S 0.817
+python3 -u evaluate_ambiguous.py \
+--env BabyAI-GoToLocal-v0 \
+--episodes 1000 \
+--model BabyAI-GoToLocal-v0_IL_bow_endpool_res_gru_seed1_22-03-08-10-00-32_best \
+--nonsense
+
+
+python3 -u evaluate_ambiguous.py \
+--env BabyAI-PickupLoc-v0 \
+--episodes 1000 \
+--model BabyAI-PickupLoc-v0_IL_bow_endpool_res_gru_seed1_22-03-08-10-31-21_best \
+--ambiguous \
+--prob-ambiguous 1
+
 """
 
 def main(args, seed, episodes):

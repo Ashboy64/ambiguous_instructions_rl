@@ -34,8 +34,8 @@ LEVELS = [# "BabyAI-GoToObj-v0",
           # "BabyAI-GoToRedBall-v0",
           # "BabyAI-GoToLocal-v0",
           # "BabyAI-PutNextLocalS6N4-v0",
-          "BabyAI-PickupLoc-v0",
-          # "BabyAI-GoToObjMaze-v0"
+          # "BabyAI-PickupLoc-v0",
+          "BabyAI-GoToObjMaze-v0"
           ]
 
 def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):

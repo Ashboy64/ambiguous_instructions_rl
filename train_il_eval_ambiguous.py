@@ -51,25 +51,28 @@ GoToLocal
 PickupLoc
 PutNextLocalS6N4
 
-python3 -u train_il_eval_ambiguous.py \
---tb \
---demos BabyAI-GoToLocal-v0 \
---env BabyAI-GoToLocal-v0
+GoToObjMaze
 
 python3 -u train_il_eval_ambiguous.py \
 --tb \
---demos BabyAI-PutNextLocalS6N4-v0_ambiguous \
---env BabyAI-PutNextLocalS6N4-v0 \
+--patience 1000 \
+--demos BabyAI-PickupLoc-v0 \
+--env BabyAI-PickupLoc-v0
+
+python3 -u train_il_eval_ambiguous.py \
+--tb \
+--patience 1000 \
+--demos BabyAI-PickupLoc-v0_ambiguous \
+--env BabyAI-PickupLoc-v0 \
 --ambiguous \
 --prob-ambiguous 1
 
 python3 -u train_il_eval_ambiguous.py \
 --tb \
---demos BabyAI-PutNextLocalS6N4-v0_nonsense \
---env BabyAI-PutNextLocalS6N4-v0 \
+--patience 1000 \
+--demos BabyAI-PickupLoc-v0_nonsense \
+--env BabyAI-PickupLoc-v0 \
 --nonsense
-
-Hello
 """
 
 
@@ -80,24 +83,8 @@ def main(args):
         assert len(args.multi_demos) == len(args.multi_episodes)
 
 
-    if args.nonsense:
-        exp_type = "nonsense"
-    elif args.ambiguous:
-        exp_type = f"ambiguous-{args.prob_ambiguous}"
-    else:
-        exp_type = "plain"
-
-
-    model_name_parts = {
-        'env': args.env,
-        "exp_type": exp_type,
-        'arch': args.arch,
-        'seed': args.seed,
-        'info': '',
-        'coef': ''}
-    default_model_name = "{env}_{exp_type}_{arch}_seed{seed}{info}{coef}".format(**model_name_parts)
-    # if args.pretrained_model:
-    #     default_model_name = args.pretrained_model + '_pretrained_' + ImitationLearning.default_model_name(args)
+    if args.pretrained_model:
+        default_model_name = args.pretrained_model + '_pretrained_' + ImitationLearning.default_model_name(args)
     args.model = args.model.format(**model_name_parts) if args.model else ImitationLearningAmbiguous.default_model_name(args)
 
     utils.configure_logging(args.model)

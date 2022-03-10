@@ -13,6 +13,7 @@ import cv2
 import babyai.utils as utils
 
 from wrappers import AmbiguousInstructionsWrapper, NonsenseInstructionsWrapper
+import torch
 
 """
 python3 -u render_demos.py \
@@ -32,10 +33,13 @@ python3 -u render_demos.py \
 --env BabyAI-PutNextLocalS6N4-v0 \
 --model BabyAI-PutNextLocalS6N4-v0_nonsense_ppo_bow_endpool_res_gru_mem_seed1_22-02-26-22-09-17 \
 --nonsense \
---n-episodes 5
+--n-episodes 1 \
+--random
 
-
-
+python3 -u render_demos.py \
+--env BabyAI-GoToObjMaze-v0 \
+--n-episodes 1 \
+--random
 """
 
 # Parse arguments
@@ -66,6 +70,9 @@ parser.add_argument("--ambiguous", "-a", action="store_true", default=False,
                     help="Add AmbiguousInstructionsWrapper")
 parser.add_argument("--prob-ambiguous", type=float, default=0.5,
                     help="Probability that the env will generate ambiguous instructions each episode")
+
+parser.add_argument("--random", action="store_true", default=False,
+                    help="Choose random actions instead of the agent actions")
 args = parser.parse_args()
 
 action_map = {
@@ -79,7 +86,8 @@ action_map = {
     " "         : "toggle"
 }
 
-assert args.model is not None or args.demos is not None, "--model or --demos must be specified."
+
+assert args.model is not None or args.demos is not None or args.random is not None, "--model or --demos must be specified."
 if args.seed is None:
     args.seed = 0 if args.model is not None else 1
 
@@ -104,7 +112,8 @@ if args.ambiguous or args.nonsense:
     print("True mission: {}".format(env.true_mission))
 
 # Define agent
-agent = utils.load_agent(env, args.model, args.demos, args.demos_origin, args.argmax, args.env)
+if not args.random:
+    agent = utils.load_agent(env, args.model, args.demos, args.demos_origin, args.argmax, args.env)
 
 
 def save_images(images, model_name, episode_num):
@@ -126,10 +135,17 @@ while True:
     img = env.render("rgb_array")
     images.append(img)
 
-    result = agent.act(obs)
-    obs, reward, done, _ = env.step(result['action'])
-    agent.analyze_feedback(reward, done)
-    if 'dist' in result and 'value' in result:
+    if args.random:
+        action = env.action_space.sample()
+        action = torch.tensor([action], device="cuda")
+        obs, reward, done, _ = env.step(action)
+        result = None
+    else:
+        result = agent.act(obs)
+        obs, reward, done, _ = env.step(result['action'])
+        agent.analyze_feedback(reward, done)
+
+    if result is not None and 'dist' in result and 'value' in result:
         dist, value = result['dist'], result['value']
         dist_str = ", ".join("{:.4f}".format(float(p)) for p in dist.probs[0])
         # print("step: {}, mission: {}, dist: {}, entropy: {:.2f}, value: {:.2f}".format(
@@ -138,15 +154,18 @@ while True:
         print("step: {}, mission: {}".format(step, obs['mission']))
     if done:
         # print("Reward:", reward)
-        print("Episode: {}, Mission: {}, True Mission: {}, Return: {}".format(episode_num, obs['mission'], env.true_mission, reward))
+        print("Episode: {}, Mission: {}, True Mission: {}, Return: {}".format(episode_num, obs['mission'], env.true_mission if args.nonsense or args.ambiguous else "same", reward))
 
-        save_images(images, args.model, episode_num)
+        save_images(images, args.env + "_random" if args.random else args.model, episode_num)
         images = []
 
         episode_num += 1
         env.seed(args.seed + episode_num)
         obs = env.reset()
-        agent.on_reset()
+
+        if not args.random:
+            agent.on_reset()
+
         step = 0
         if episode_num > args.n_episodes:
             break

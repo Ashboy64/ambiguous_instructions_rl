@@ -178,13 +178,22 @@ class ImitationLearningAmbiguous(object):
         # Define model name
         suffix = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
         instr = args.instr_arch if args.instr_arch else "noinstr"
+
+        if args.nonsense:
+            exp_type = "nonsense"
+        elif args.ambiguous:
+            exp_type = f"ambiguous-{args.prob_ambiguous}"
+        else:
+            exp_type = "plain"
+
         model_name_parts = {
             'envs': named_envs,
+            "exp_type": exp_type,
             'arch': args.arch,
             'instr': instr,
             'seed': args.seed,
             'suffix': suffix}
-        default_model_name = "{envs}_IL_{arch}_{instr}_seed{seed}_{suffix}".format(**model_name_parts)
+        default_model_name = "{envs}_{exp_type}_IL_{arch}_{instr}_seed{seed}_{suffix}".format(**model_name_parts)
         if getattr(args, 'pretrained_model', None):
             default_model_name = args.pretrained_model + '_pretrained_' + default_model_name
         return default_model_name
@@ -216,6 +225,8 @@ class ImitationLearningAmbiguous(object):
                 batch_index, frames / (time.time() - start_time) if frames else 0))
             batch = [demos[i] for i in indices[offset: offset + batch_size]]
             frames += sum([len(demo[3]) for demo in batch])
+
+            print("Mission:", batch[0][0])
 
             _log = self.run_epoch_recurrence_one_batch(batch, is_training=is_training)
 
