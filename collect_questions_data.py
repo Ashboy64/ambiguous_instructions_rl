@@ -63,32 +63,37 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
             num_ambiguous = 0
             all = 0
             while True:
+                # print("agent.act(obs)['action']", agent.act(obs)['action'])
                 action = agent.act(obs)['action']
                 if isinstance(action, torch.Tensor):
                     action = action.item()
                 new_obs, reward, done, _ = env.step(action)
                 agent.analyze_feedback(reward, done)
-                mission_wordlist = obs["mission"].split(" ")
-                color = None
-                loc = None
-                type = None
-                for word in mission_wordlist:
-                    if word in COLOR_NAMES:
-                        color = word
-                    elif word in LOC_NAMES:
-                        loc = word
-                    elif word in OBJ_TYPES:
-                        type = word
-                desc = ObjDesc(type, color=color, loc=loc)
 
                 # This makes the instruction ambiguous that is being saved in the dataset,
                 # but the original, unaltered instruction is still used by the agent
                 is_ambiguous = np.random.uniform() > 0.5
                 if is_ambiguous:
                     new_mission = make_ambiguous(env.instrs, env)
-                    print(mission, new_mission)
+                    mission_wordlist = new_mission.split(" ")
+                    color = None
+                    loc = None
+                    type = None
+                    for word in mission_wordlist:
+                        if word in COLOR_NAMES:
+                            color = word
+                        elif word in LOC_NAMES:
+                            loc = word
+                        elif word in OBJ_TYPES:
+                            type = word
+                    desc = ObjDesc(type, color=color, loc=loc)
+                    if loc is None:
+                        desc.use_location = False
+                    if type == "object":
+                        desc.type = "object"
+                    # print(mission, new_mission)
                     # print("\nmission:", mission)
-                    # print("new_mission:", new_mission)
+                    # print("new_mission:", color, loc, type)
                     if len(desc.find_matching_objs(env)[0]) > 1:
                         is_ambiguous = True
                     else:
