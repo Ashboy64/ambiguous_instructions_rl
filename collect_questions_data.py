@@ -20,9 +20,9 @@ from gym_minigrid.minigrid import COLOR_NAMES
 """
 python3 -u collect_questions_data.py \
 --savedir ./data \
---max-steps 3000 \
+--max-steps 500 \
 --eps-per-level 100 \
---samples-per-level 200
+--samples-per-level 1000
 
 
 Specify which levels to collect data for by editing the LEVELS constant
@@ -33,9 +33,10 @@ LEVELS = [# "BabyAI-GoToObj-v0",
           # "BabyAI-GoToRedBallGrey-v0",
           # "BabyAI-GoToRedBall-v0",
           # "BabyAI-GoToLocal-v0",
-          # "BabyAI-PutNextLocalS6N4-v0",
+          # "BabyAI-OpenDoorLoc-v0",
+          "BabyAI-PutNextLocalS6N4-v0",
           # "BabyAI-PickupLoc-v0",
-          "BabyAI-GoToObjMaze-v0"
+          # "BabyAI-GoToObjMaze-v0"
           ]
 
 def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
@@ -64,7 +65,10 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
             all = 0
             while True:
                 # print("agent.act(obs)['action']", agent.act(obs)['action'])
-                action = agent.act(obs)['action']
+                try:
+                    action = agent.act(obs)['action']
+                except:
+                    print("Error in data generation.")
                 if isinstance(action, torch.Tensor):
                     action = action.item()
                 new_obs, reward, done, _ = env.step(action)
@@ -75,38 +79,53 @@ def generate_data(levels, savedir, max_steps, eps_per_level, samples_per_level):
                 is_ambiguous = np.random.uniform() > 0.5
                 if is_ambiguous:
                     new_mission = make_ambiguous(env.instrs, env)
+                    # print(mission, new_mission)
                     mission_wordlist = new_mission.split(" ")
                     color = None
                     loc = None
                     type = None
-                    for word in mission_wordlist:
-                        if word in COLOR_NAMES:
-                            color = word
-                        elif word in LOC_NAMES:
-                            loc = word
-                        elif word in OBJ_TYPES:
-                            type = word
-                    desc = ObjDesc(type, color=color, loc=loc)
-                    if loc is None:
-                        desc.use_location = False
-                    if type == "object":
-                        desc.type = "object"
+                    descs = []
+                    is_ambiguous = False
+                    for idx in range(len(mission_wordlist)):
+                        if mission_wordlist[idx] in OBJ_TYPES:
+                            if mission_wordlist[idx] != "object":
+                                type = mission_wordlist[idx]
+                            if mission_wordlist[idx-1] in COLOR_NAMES:
+                                color = mission_wordlist[idx-1]
+                            for i in range(5):
+                                if i + idx > len(mission_wordlist) - 1:
+                                    break
+                                else:
+                                    if mission_wordlist[idx + i] in LOC_NAMES:
+                                        loc = mission_wordlist[idx + i]
+                            descs.append(ObjDesc(type, color=color, loc=loc))
                     # print(mission, new_mission)
                     # print("\nmission:", mission)
                     # print("new_mission:", color, loc, type)
-                    if len(desc.find_matching_objs(env)[0]) > 1:
-                        is_ambiguous = True
-                    else:
-                        is_ambiguous = False
+                    for desc in descs:
+                        if len(desc.find_matching_objs(env)[0]) > 1:
+                            is_ambiguous = True
                 else:
                     new_mission = mission
                 if is_ambiguous:
-                    all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
-                    num_ambiguous += 1
-                    all += 1
-                elif all <= 2 * is_ambiguous or all <= 100:
-                    all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
-                    all += 1
+                    state = blosc.pack_array(obs['image'])
+                    present = 0
+                    for data in all_data:
+                        if state == data[0] and new_mission == data[-1]:
+                            present = 1
+                    if not present:
+                        all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
+                        num_ambiguous += 1
+                        all += 1
+                else:
+                    state = blosc.pack_array(obs['image'])
+                    present = 0
+                    for data in all_data:
+                        if state == data[0] and new_mission == data[-1]:
+                            present = 1
+                    if not present:
+                        all_data.append((blosc.pack_array(obs['image']), obs['direction'], reward, new_mission, is_ambiguous))
+                        all += 1
                 obs = new_obs
 
                 t+=1
