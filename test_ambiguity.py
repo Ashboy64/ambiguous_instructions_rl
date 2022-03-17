@@ -1,5 +1,5 @@
 """
-Visualize start state, instruction, and ambiguous version for a bunch 
+Visualize start state, instruction, and ambiguous version for a bunch
 of different episodes for the specified environment.
 
 Environments that seem to contain decent amount of ambiguity:
@@ -24,7 +24,7 @@ Final List:
 """
 
 
-import gym 
+import gym
 import babyai
 import time
 import argparse
@@ -47,15 +47,15 @@ def main():
     for i in range(10):
         obs = env.reset()
         env.render()
-        
+
         print()
         print(obs['mission'])
         print(make_ambiguous(env.instrs, env))
 
         start = time.time()
 
-        while time.time() - start < 5:
-            pass 
+        # while time.time() - start < 5:
+        #     pass
 
 
 if __name__ == '__main__':

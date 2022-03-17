@@ -3,9 +3,9 @@ import torch
 
 DEVICE_IDX = 1
 
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_IDX)
-
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+# os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_IDX)
+print("torch.__version__:", torch.__version__)
 print("DEVICE_IDX:", DEVICE_IDX)
 print("torch.cuda.current_device():", torch.cuda.current_device())
 print(f"torch.cuda.device({DEVICE_IDX}):", torch.cuda.device(DEVICE_IDX))

@@ -68,8 +68,4 @@ def split_dataset(data_dir):
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    main()
-=======
     split_dataset("./data")
->>>>>>> 07a9fca9cd4d44048f5d7850c8e5d5e16dcbfe3a

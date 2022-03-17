@@ -46,9 +46,9 @@ parser.add_argument("--prob-ambiguous", type=float, default=0.5,
                     help="Probability that the env will generate ambiguous instructions each episode")
 
 
-# DEVICE_IDX = 1
-# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-# os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_IDX)
+DEVICE_IDX = 1
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = str(DEVICE_IDX)
 
 """
 OpenDoorLoc
@@ -57,20 +57,21 @@ PickupLoc
 PutNextLocalS6N4
 
 GoToObjMaze
+UnblockPickup
 
 python3 -u train_il_eval_ambiguous.py \
 --tb \
 --patience 1000 \
 --frames 50000000 \
---demos BabyAI-UnblockPickup-v0 \
---env BabyAI-UnblockPickup-v0
+--demos BabyAI-OpenDoorLoc-v0 \
+--env BabyAI-OpenDoorLoc-v0
 
 python3 -u train_il_eval_ambiguous.py \
 --tb \
 --patience 1000 \
 --frames 50000000 \
---demos BabyAI-GoToObjMaze-v0half__ambiguous \
---env BabyAI-GoToObjMaze-v0 \
+--demos BabyAI-OpenDoorLoc-v0_half_ambiguous \
+--env BabyAI-OpenDoorLoc-v0 \
 --ambiguous \
 --prob-ambiguous 0.5
 
@@ -78,8 +79,8 @@ python3 -u train_il_eval_ambiguous.py \
 --tb \
 --patience 1000 \
 --frames 50000000 \
---demos BabyAI-GoToObjMaze-v0_ambiguous \
---env BabyAI-GoToObjMaze-v0 \
+--demos BabyAI-OpenDoorLoc-v0_ambiguous \
+--env BabyAI-OpenDoorLoc-v0 \
 --ambiguous \
 --prob-ambiguous 1
 
@@ -87,8 +88,8 @@ python3 -u train_il_eval_ambiguous.py \
 --tb \
 --patience 1000 \
 --frames 50000000 \
---demos BabyAI-GoToObjMaze-v0_nonsense \
---env BabyAI-GoToObjMaze-v0 \
+--demos BabyAI-OpenDoorLoc-v0_nonsense \
+--env BabyAI-OpenDoorLoc-v0 \
 --nonsense
 """
 

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 class TextDataset(torch.utils.data.Dataset):
     def __init__(self, data_dir, tokenizer, pad_id, vocab=None):
         with open(data_dir, "r") as f:
-            self.samples = [json.loads(line) for line in f] 
+            self.samples = [json.loads(line) for line in f]
         self.data_dir = data_dir
         self.tokenizer = tokenizer
         self.pad_id = pad_id
@@ -27,9 +27,9 @@ class TextDataset(torch.utils.data.Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        if self.vocab is not None: 
+        if self.vocab is not None:
             sample = self.tokenizer(self.samples[idx]["text"])
-        else: 
+        else:
             sample = self.tokenizer(self.samples[idx]["text"])["input_ids"]
         while len(sample) < 156:
             sample.append(self.pad_id)
@@ -39,7 +39,7 @@ class TextDataset(torch.utils.data.Dataset):
             for word in sample:
                 text.append(self.vocab[word])
             text = torch.Tensor(text).long()
-        else: 
+        else:
             text = torch.Tensor(sample).long()
         # print(sample)
 
@@ -57,7 +57,7 @@ def train(model, num_epochs, data_loader, valid_dataloader):
     model.train()
 
     validate(model, valid_dataloader)
-    
+
     for epoch in range(num_epochs):
         epoch_loss = 0.
         metric = torchmetrics.Accuracy()

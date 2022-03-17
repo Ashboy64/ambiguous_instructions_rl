@@ -15,7 +15,7 @@ def create_vocab(data_dirs):
     all_samples = []
     for data_dir in data_dirs:
         with open(data_dir, "r") as f:
-            samples = [json.loads(line) for line in f] 
+            samples = [json.loads(line) for line in f]
             all_samples += samples
     tokenizer = get_tokenizer(None, language='en')
     idx = 1
@@ -43,7 +43,7 @@ class LSTM_classifier(nn.Module):
 
         self.linear = nn.Linear(input_dim, output_dim)
 
-    def forward(self, x, labels):
+    def forward(self, x, labels=None):
         # print(x.shape)
         x = self.embedding(x)
         # print(x.shape)
@@ -53,9 +53,13 @@ class LSTM_classifier(nn.Module):
         # print(x.shape)
         x = self.linear(x)
         x = self.sigmoid(x).clone()
-        loss = self.bceloss(x.squeeze_(), labels)
 
-        return x, loss
+        if labels is None:
+            return x
+        else:
+            loss = self.bceloss(x.squeeze_(), labels)
+
+            return x, loss
 
 
 def train(model, num_epochs, data_loader, valid_dataloader):
@@ -64,7 +68,7 @@ def train(model, num_epochs, data_loader, valid_dataloader):
     validate(model, valid_dataloader)
 
     model.train()
-    
+
     for epoch in range(num_epochs):
         epoch_loss = 0.
         metric = torchmetrics.Accuracy()
@@ -127,10 +131,10 @@ def validate(model, data_loader):
 
 def test():
     batch_size = 16
-    vocab = create_vocab(['data/train.jsonl', 'data/valid.jsonl'])
+    vocab = create_vocab(['lstm_vocab/train.jsonl', 'lstm_vocab/valid.jsonl'])
     model = LSTM_classifier(len(vocab))
-    model.load_state_dict(torch.load("finetuned_models/lstm.pth"))
-    test_dataset = TextDataset('data/test.jsonl', get_tokenizer("spacy", language='en'), "<PAD>", vocab=vocab)
+    model.load_state_dict(torch.load("classifier_models/lstm.pth"))
+    test_dataset = TextDataset('lstm_vocab/test.jsonl', get_tokenizer("spacy", language='en'), "<PAD>", vocab=vocab)
     data_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     model.eval()
     metric = torchmetrics.Accuracy()

@@ -66,11 +66,11 @@ logger = logging.getLogger(__name__)
 
 """
 python3 -u make_agent_demos_ambiguous.py \
---env BabyAI-UnblockPickup-v0 \
+--env BabyAI-OpenDoorLoc-v0 \
 --model BOT \
 --episodes 10000 \
 --valid-episodes 1000 \
---demos BabyAI-UnblockPickup-v0
+--demos BabyAI-OpenDoorLoc-v0
 """
 
 def print_demo_lengths(demos):

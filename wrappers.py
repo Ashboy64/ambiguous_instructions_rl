@@ -16,7 +16,7 @@ import babyai.utils as utils
 from ambiguity import make_ambiguous
 
 
-NONSENSE_STRING = "ball ball ball ball ball ball ball ball ball" 
+NONSENSE_STRING = "ball ball ball ball ball ball ball ball ball"
 
 class InstructionsWrapperBase:
     def __init__(self, env):

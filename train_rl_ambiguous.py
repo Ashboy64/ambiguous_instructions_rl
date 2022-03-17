@@ -140,7 +140,7 @@ parser.add_argument("--ppo-epochs", type=int, default=4,
 parser.add_argument("--save-interval", type=int, default=50,
                     help="number of updates between two saves (default: 50, 0 means no saving)")
 
-parser.add_argument("--timestep_penalty", type=float, default=0, 
+parser.add_argument("--timestep_penalty", type=float, default=0,
                     help="penalty to apply at each timestep agent has not reached goal")
 
 parser.add_argument("--nonsense", "-n", action="store_true", default=False,
@@ -194,7 +194,7 @@ model_name_parts = {
     'seed': args.seed,
     'info': '',
     'coef': '',
-    'suffix': suffix, 
+    'suffix': suffix,
     'exp_type': exp_type,
     'penalty': args.timestep_penalty}
 default_model_name = "{exp_type}_{env}_{exp_type}_{algo}_{arch}_{instr}_{mem}_penalty_{penalty}_seed{seed}{info}{coef}_{suffix}".format(**model_name_parts)
